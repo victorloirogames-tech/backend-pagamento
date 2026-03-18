@@ -1,47 +1,40 @@
-import mercadopago from "mercadopago";
+import { MercadoPagoConfig, Preference } from "mercadopago";
 
-mercadopago.configure({
-  access_token: "APP_USR-5777321285546942-031716-f1f462164bc8fd8022c2f6dd76f3c084-433616002"
+const client = new MercadoPagoConfig({
+  accessToken: "APP_USR-5777321285546942-031716-f1f462164bc8fd8022c2f6dd76f3c084-433616002"
 });
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Método não permitido" });
+  // 🔥 libera CORS (IMPORTANTÍSSIMO)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
   }
 
   try {
-    const { items } = req.body;
+    const preference = new Preference(client);
 
-    const preference = {
-      items: items.map(item => ({
-        title: item.nome,
-        quantity: item.qtd,
-        unit_price: Number(item.preco)
-      })),
+    const response = await preference.create({
+      body: {
+        items: [
+          {
+            title: "Pedido Macedo Alaminutas",
+            quantity: 1,
+            unit_price: 25
+          }
+        ]
+      }
+    });
 
-      payment_methods: {
-        installments: 12
-      },
-
-      back_urls: {
-        success: "https://seusite.com/sucesso",
-        failure: "https://seusite.com/erro",
-        pending: "https://seusite.com/pendente"
-      },
-
-      auto_return: "approved"
-    };
-
-    const response = await mercadopago.preferences.create(preference);
-
-    return res.status(200).json({
-      link: response.body.init_point
+    res.status(200).json({
+      init_point: response.init_point
     });
 
   } catch (error) {
-    return res.status(500).json({
-      error: "Erro ao criar pagamento",
-      detalhe: error.message
-    });
+    console.error(error);
+    res.status(500).json({ error: "Erro ao criar pagamento" });
   }
 }
