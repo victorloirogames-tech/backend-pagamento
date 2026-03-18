@@ -5,7 +5,6 @@ const client = new MercadoPagoConfig({
 });
 
 export default async function handler(req, res) {
-  // 🔥 libera CORS (IMPORTANTÍSSIMO)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -17,7 +16,7 @@ export default async function handler(req, res) {
   try {
     const preference = new Preference(client);
 
-    const response = await preference.create({
+    const result = await preference.create({
       body: {
         items: [
           {
@@ -29,12 +28,15 @@ export default async function handler(req, res) {
       }
     });
 
-    res.status(200).json({
-      init_point: response.init_point
+    return res.status(200).json({
+      init_point: result.init_point
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Erro ao criar pagamento" });
+    console.error("ERRO MERCADO PAGO:", error);
+    return res.status(500).json({
+      error: "Erro ao criar pagamento",
+      detalhe: error.message
+    });
   }
 }
