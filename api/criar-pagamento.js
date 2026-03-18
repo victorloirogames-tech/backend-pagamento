@@ -14,17 +14,19 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { items } = req.body;
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        error: "Carrinho vazio"
+      });
+    }
+
     const preference = new Preference(client);
 
     const result = await preference.create({
       body: {
-        items: [
-          {
-            title: "Pedido Macedo Alaminutas",
-            quantity: 1,
-            unit_price: 25
-          }
-        ]
+        items: items
       }
     });
 
@@ -33,10 +35,9 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("ERRO MERCADO PAGO:", error);
+    console.error("ERRO:", error);
     return res.status(500).json({
-      error: "Erro ao criar pagamento",
-      detalhe: error.message
+      error: "Erro ao criar pagamento"
     });
   }
 }
